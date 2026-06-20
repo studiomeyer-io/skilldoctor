@@ -1,5 +1,5 @@
 {
-  "name": "skilldoctor",
+  "name": "@studiomeyer-io/skilldoctor",
   "version": "0.1.0",
   "description": "Linter and security scanner for AI-agent skill and instruction files (Claude Code SKILL.md, AGENTS.md, subagents). Prints an A-F grade, supports --fix, emits JSON + SARIF, ships as a GitHub Action.",
   "type": "module",

@@ -7,7 +7,7 @@
 [![license](https://img.shields.io/npm/l/skilldoctor.svg)](./LICENSE)
 
 ```bash
-npx skilldoctor check .claude/skills
+npx @studiomeyer-io/skilldoctor check .claude/skills
 ```
 
 ```
@@ -38,10 +38,11 @@ Tools that **sync/install** skills exist. A **linter + security scanner** for th
 
 ```bash
 # one-off
-npx skilldoctor check <path>
+npx @studiomeyer-io/skilldoctor check <path>
 
 # or add to a project
-npm install --save-dev skilldoctor
+npm install --save-dev @studiomeyer-io/skilldoctor
+# (the installed command is `skilldoctor`)
 ```
 
 Requires Node.js ≥ 20. Heuristic-only by default — **no API key needed**.
@@ -143,7 +144,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - run: npx skilldoctor check ".claude/skills" "**/AGENTS.md" --sarif skilldoctor.sarif --fail-on warning
+      - run: npx @studiomeyer-io/skilldoctor check ".claude/skills" "**/AGENTS.md" --sarif skilldoctor.sarif --fail-on warning
       - if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
