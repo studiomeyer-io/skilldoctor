@@ -1,0 +1,12 @@
+# Source + config — only ship the built dist (see "files" in package.json).
+src/
+test/
+examples/
+.github/
+*.ts
+!*.d.ts
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+coverage/
+.gitignore

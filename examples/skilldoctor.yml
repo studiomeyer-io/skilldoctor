@@ -1,0 +1,36 @@
+# Copy this file into .github/workflows/ to lint your agent skills in CI and
+# upload findings to GitHub code scanning (Security > Code scanning alerts).
+name: skilldoctor
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write # required to upload the SARIF report
+
+jobs:
+  lint-skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Adjust the paths to wherever your skills / instruction files live.
+      - name: Run skilldoctor
+        run: >
+          npx --yes skilldoctor check
+          ".claude/skills" "**/AGENTS.md" "**/SKILL.md"
+          --sarif skilldoctor.sarif
+          --fail-on warning
+
+      - name: Upload SARIF to code scanning
+        if: always() # upload even when skilldoctor exits non-zero
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: skilldoctor.sarif
+          category: skilldoctor
