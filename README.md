@@ -182,6 +182,16 @@ skilldoctor's rules are grounded in the actual current specs (checked while buil
 
 When a field's meaning is uncertain, skilldoctor **warns leniently rather than inventing a hard rule**.
 
+## Part of the StudioMeyer MCP toolkit
+
+A small family of focused, production-grade tools for building and operating MCP servers & agents — mix and match:
+
+- [mcp-armor](https://github.com/studiomeyer-io/mcp-armor) — runtime defense sidecar: scans tool calls, verifies signed manifests, blocks known-bad CVEs
+- [mcp-gauntlet](https://github.com/studiomeyer-io/mcp-gauntlet) — pre-deploy `mcp-fuzz` (schema-aware fuzzer) + `mcp-storm` (load tester)
+- [mcp-otel](https://github.com/studiomeyer-io/mcp-otel) — W3C Trace Context → OpenTelemetry bridge
+- [mcp-cache-kit](https://github.com/studiomeyer-io/mcp-cache-kit) — leak-safe SEP-2549 caching (`ttlMs` + `cacheScope`)
+- **skilldoctor** *(this one)* — linter + security scanner for agent skill files
+
 ## License
 
 [MIT](./LICENSE) © 2026 StudioMeyer. See [SECURITY.md](./SECURITY.md) for the security policy and the threat-model boundaries.
