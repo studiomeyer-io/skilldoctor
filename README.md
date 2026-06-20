@@ -1,10 +1,15 @@
+<!-- studiomeyer-mcp-stack-banner:start -->
+> **Part of the [StudioMeyer MCP Stack](https://studiomeyer.io)** — Built in Mallorca 🌴 · ⭐ if you use it
+<!-- studiomeyer-mcp-stack-banner:end -->
+
 # skilldoctor
 
 **A linter and security scanner for AI-agent skill & instruction files.** Think `eslint`, but for the `SKILL.md`, `AGENTS.md`, and subagent files that agents now install like packages.
 
 [![CI](https://github.com/studiomeyer-io/skilldoctor/actions/workflows/ci.yml/badge.svg)](https://github.com/studiomeyer-io/skilldoctor/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/skilldoctor.svg)](https://www.npmjs.com/package/skilldoctor)
-[![license](https://img.shields.io/npm/l/skilldoctor.svg)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/@studiomeyer-io/skilldoctor.svg)](https://www.npmjs.com/package/@studiomeyer-io/skilldoctor)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/studiomeyer-io/skilldoctor/badge)](https://scorecard.dev/viewer/?uri=github.com/studiomeyer-io/skilldoctor)
+[![license](https://img.shields.io/npm/l/@studiomeyer-io/skilldoctor.svg)](./LICENSE)
 
 ```bash
 npx @studiomeyer-io/skilldoctor check .claude/skills
