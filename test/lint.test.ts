@@ -137,3 +137,86 @@ describe("lint rules", () => {
     expect(hasRule(r.findings, "skill/unknown-field")).toBe(false);
   });
 });
+
+describe("lint rules — frontmatter shape + field types", () => {
+  it("a non-string `name` is a schema error", () => {
+    const r = analyzeContent(
+      "/x/n/SKILL.md",
+      "---\nname: 123\ndescription: a valid length description goes here for testing\n---\nbody",
+    );
+    expect(hasRule(r.findings, "skill/frontmatter-schema")).toBe(true);
+    expect(hasRule(r.findings, "skill/invalid-name")).toBe(false);
+  });
+
+  it("a quoted-empty `name` is reported as missing, not invalid", () => {
+    const r = analyzeContent(
+      "/x/n/SKILL.md",
+      '---\nname: ""\ndescription: a valid length description goes here for testing\n---\nbody',
+    );
+    expect(hasRule(r.findings, "skill/missing-name")).toBe(true);
+    expect(hasRule(r.findings, "skill/invalid-name")).toBe(false);
+  });
+
+  it("a non-string `description` (YAML list) is a schema error", () => {
+    const r = analyzeContent(
+      "/x/d/SKILL.md",
+      "---\nname: d\ndescription:\n  - a\n  - b\n---\nbody",
+    );
+    expect(hasRule(r.findings, "skill/frontmatter-schema")).toBe(true);
+    expect(hasRule(r.findings, "skill/empty-description")).toBe(false);
+  });
+
+  it("a description over the 1024-char spec limit warns (too-long)", () => {
+    const long = "x".repeat(1100);
+    const r = analyzeContent(
+      "/x/l/SKILL.md",
+      `---\nname: l\ndescription: ${long}\n---\nbody`,
+    );
+    expect(hasRule(r.findings, "skill/description-too-long")).toBe(true);
+  });
+
+  it("a non-string/non-list tool grant is a schema error", () => {
+    const r = analyzeContent(
+      "/x/t/SKILL.md",
+      "---\nname: t\ndescription: a valid length description goes here for testing\nallowed-tools: 5\n---\nbody",
+    );
+    expect(hasRule(r.findings, "skill/frontmatter-schema")).toBe(true);
+    expect(hasRule(r.findings, "tools/wildcard-grant")).toBe(false);
+  });
+
+  it("an empty tool grant string produces no tool findings", () => {
+    const r = analyzeContent(
+      "/x/te/SKILL.md",
+      '---\nname: te\ndescription: a valid length description goes here for testing\nallowed-tools: ""\n---\nbody',
+    );
+    expect(hasRule(r.findings, "tools/wildcard-grant")).toBe(false);
+    expect(hasRule(r.findings, "tools/duplicate-tool")).toBe(false);
+  });
+
+  it("a skill with NO frontmatter at all reports both required fields missing", () => {
+    const r = analyzeContent("/x/p/SKILL.md", "# body only, no frontmatter\n", {
+      forceKind: "skill",
+    });
+    expect(hasRule(r.findings, "skill/missing-name")).toBe(true);
+    expect(hasRule(r.findings, "skill/missing-description")).toBe(true);
+  });
+
+  it("a subagent with an unrecognized field is flagged (info) as unknown", () => {
+    const r = analyzeContent(
+      "/proj/.claude/agents/rev.md",
+      "---\nname: rev\ndescription: reviews code thoroughly and reports findings clearly\ntools: Read\nbogusfield: yes\n---\nprompt",
+    );
+    expect(r.kind).toBe("subagent");
+    const f = r.findings.find((x) => x.ruleId === "skill/unknown-field");
+    expect(f).toBeTruthy();
+    expect(f?.severity).toBe("info");
+  });
+
+  it("a known subagent field (model) is NOT flagged unknown", () => {
+    const r = analyzeContent(
+      "/proj/.claude/agents/rev.md",
+      "---\nname: rev\ndescription: reviews code thoroughly and reports findings clearly\ntools: Read\nmodel: opus\npermissionMode: ask\n---\nprompt",
+    );
+    expect(hasRule(r.findings, "skill/unknown-field")).toBe(false);
+  });
+});

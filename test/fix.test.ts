@@ -75,3 +75,37 @@ describe("--fix engine", () => {
     expect(result.output.includes("\r\n")).toBe(true);
   });
 });
+
+describe("--fix engine — safe no-op boundaries", () => {
+  it("does NOT rewrite a block-list (YAML array) tool grant", () => {
+    const src =
+      "---\nname: a\ndescription: long enough description for testing here\nallowed-tools: [Read, Read, Grep]\n---\n\nbody\n";
+    const result = fixFile(parse("/x/a/SKILL.md", src));
+    // Block arrays span the value differently; --fix leaves them to a human.
+    expect(result.applied).not.toContain("dedupe-allowed-tools");
+    expect(result.changed).toBe(false);
+  });
+
+  it("skips an empty tool-grant value (nothing to de-duplicate)", () => {
+    const src =
+      "---\nname: a\ndescription: long enough description for testing here\nallowed-tools:   \n---\n\nbody\n";
+    const result = fixFile(parse("/x/a/SKILL.md", src));
+    // The only change is the trailing-whitespace trim, never a tool dedupe.
+    expect(result.applied).toEqual(["trailing-whitespace"]);
+  });
+
+  it("returns a skill file with no frontmatter unchanged", () => {
+    const result = fixFile(parse("/x/p/SKILL.md", "# body only, no frontmatter\n"));
+    expect(result.changed).toBe(false);
+    expect(result.applied).toEqual([]);
+  });
+
+  it("does not fix frontmatter it could not parse", () => {
+    const src = '---\nname: a\ndescription: "unterminated\n---\nbody\n';
+    const parsed = parse("/x/a/SKILL.md", src);
+    expect(parsed.frontmatter.error).toBeDefined();
+    const result = fixFile(parsed);
+    expect(result.changed).toBe(false);
+    expect(result.output).toBe(src);
+  });
+});
