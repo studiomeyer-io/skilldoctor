@@ -50,8 +50,8 @@ export const RULES: readonly RuleDescriptor[] = [
     title: "Empty description",
     category: "lint",
     defaultSeverity: "error",
-    description: "`description` is present but blank. It must be non-empty.",
-    fixable: true,
+    description: "`description` is present but blank. It must be non-empty. The fixer deliberately does NOT auto-overwrite an existing (even empty) description with a stub, so this is reported but not auto-fixed.",
+    fixable: false,
   },
   {
     ruleId: "skill/description-too-short",
