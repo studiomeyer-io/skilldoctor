@@ -97,7 +97,7 @@ It understands three file kinds:
 | `skill/invalid-name` | error | no | `name` must be 1-64 lowercase chars (`a-z 0-9 -`), no leading/trailing/consecutive hyphens. |
 | `skill/name-dir-mismatch` | warning | no | `name` must match the parent directory (spec). |
 | `skill/missing-description` | error | yes | `description` is required (it's how agents decide when to load a skill). |
-| `skill/empty-description` | error | yes | `description` is blank. |
+| `skill/empty-description` | error | no | `description` is blank. |
 | `skill/description-too-short` | warning | no | Too short to convey what/when. |
 | `skill/description-too-long` | warning | no | Over the 1024-char spec limit. |
 | `skill/vague-description` | info | no | Generic phrasing with no trigger keywords. |
@@ -117,9 +117,9 @@ Run over the **description + body**, treated as untrusted input:
 
 | Rule | Default severity | Fixable | What it detects |
 | --- | --- | --- | --- |
-| `sec/prompt-injection` | error | no | "ignore previous instructions", "disregard your system prompt", role-override/jailbreak personas, injected "new instructions:". |
+| `sec/prompt-injection` | error | no | "ignore previous instructions", "disregard your system prompt", role-override/jailbreak personas, injected "new instructions:" — including phrases split across a line break. |
 | `sec/disable-safety` | error | no | Instructions to disable safety/guardrails/hooks/approval, or `--dangerously-skip-permissions`. |
-| `sec/data-exfiltration` | error | no | An outbound call (curl/POST/fetch to an external URL) **near** secrets/env — the exfil shape. |
+| `sec/data-exfiltration` | error | no | An outbound call (curl/POST/fetch to an external URL) **near** secrets/env — including a secret in a curl auth header, a named secret env var, or a `$VAR` / `${VAR}` reference. The exfil shape. |
 | `sec/env-base64` | warning | no | base64/encode of `env`/secrets (covert exfil precursor). |
 | `sec/secret-access` | warning | no | Reads `~/.ssh`, `.aws/credentials`, `.env`, known secret env vars, … |
 | `sec/suspicious-tool-combo` | warning | no | A "read-only/docs" skill that grants **Bash + network** — exfil-enabling combo. |
@@ -146,12 +146,12 @@ jobs:
   lint-skills:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: 20 }
       - run: npx @studiomeyer-io/skilldoctor check ".claude/skills" "**/AGENTS.md" --sarif skilldoctor.sarif --fail-on warning
       - if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: skilldoctor.sarif
 ```

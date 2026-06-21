@@ -8,7 +8,10 @@
  *   2. add a missing `description:` stub with a TODO marker
  *   3. de-duplicate tools within `allowed-tools` / `tools` (preserving order)
  *
- * The fixer is idempotent: running it twice produces identical output.
+ * The body is re-attached BYTE-FOR-BYTE from the original source — including its
+ * original line endings — so a fix to the frontmatter can never alter, reflow,
+ * or re-encode a single character of the (untrusted) body. The fixer is
+ * idempotent: running it twice produces identical output.
  */
 
 import type { ParsedFile } from "./types.js";
@@ -25,6 +28,44 @@ export interface FixResult {
   changed: boolean;
   /** Names of the fixes applied. */
   applied: string[];
+}
+
+/**
+ * Locate the original, byte-exact body suffix of a parsed file (everything
+ * after the closing `---` fence, including its trailing newline and original
+ * line endings). Returns `null` if the source does not contain a closing fence
+ * on its own line (in which case there is no body to preserve).
+ *
+ * We work on `raw` directly rather than `file.body` because `file.body` was
+ * produced by splitting on `\r?\n` and re-joining with `\n`, which loses the
+ * original CR/LF bytes — re-attaching it would silently rewrite the body's line
+ * endings. The whole point of this helper is to avoid exactly that.
+ */
+function originalBodySuffix(raw: string): string | null {
+  // The opening fence is on line 1 (already verified by the parser when
+  // frontmatter.present is true). Walk lines to find the first standalone
+  // closing fence, tracking byte offsets so we can slice the original string.
+  let offset = 0;
+  let lineNo = 0;
+  while (offset <= raw.length) {
+    let nl = raw.indexOf("\n", offset);
+    const hasNl = nl !== -1;
+    if (!hasNl) nl = raw.length;
+    // Line content excluding the line terminator (handle CRLF).
+    let lineEnd = nl;
+    if (lineEnd > offset && raw.charCodeAt(lineEnd - 1) === 13 /* \r */) {
+      lineEnd -= 1;
+    }
+    const line = raw.slice(offset, lineEnd);
+    if (lineNo >= 1 && /^---[ \t]*$/.test(line)) {
+      // Body is everything AFTER this line's terminator.
+      return hasNl ? raw.slice(nl + 1) : "";
+    }
+    if (!hasNl) break;
+    offset = nl + 1;
+    lineNo += 1;
+  }
+  return null;
 }
 
 /**
@@ -123,16 +164,24 @@ export function fixFile(file: ParsedFile): FixResult {
     return { output: file.raw, changed: false, applied };
   }
 
-  const newFrontmatter = fmLines.join("\n");
+  // Rebuild ONLY the frontmatter region. The body is re-attached byte-for-byte
+  // from the original source so its line endings (and every other character)
+  // are never touched — fixing the frontmatter must not rewrite the body.
+  //
+  // EOL is detected from the original file (frontmatter.raw was already
+  // re-joined with `\n` by the parser, so it carries no CR to sniff). We emit
+  // the frontmatter with the file's own convention; the body keeps its own.
   const eol = file.raw.includes("\r\n") ? "\r\n" : "\n";
+  const newFrontmatter = fmLines.join(eol);
+  const bodySuffix = originalBodySuffix(file.raw);
   const rebuilt =
     "---" +
     eol +
-    newFrontmatter.split("\n").join(eol) +
+    newFrontmatter +
     eol +
     "---" +
     eol +
-    file.body.split("\n").join(eol);
+    (bodySuffix ?? "");
 
   return { output: rebuilt, changed: true, applied };
 }
