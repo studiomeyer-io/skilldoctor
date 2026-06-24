@@ -161,7 +161,7 @@ jobs:
 skilldoctor ships dual ESM + CJS with TypeScript types.
 
 ```ts
-import { analyzeContent, fixFile, parseFile, sarifString } from "skilldoctor";
+import { analyzeContent, fixFile, parseFile, sarifString } from "@studiomeyer-io/skilldoctor";
 
 const report = analyzeContent("my-skill/SKILL.md", contents);
 console.log(report.grade, report.score);
