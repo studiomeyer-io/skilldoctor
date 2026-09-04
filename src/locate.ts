@@ -51,3 +51,25 @@ export function makeEvidence(snippet: string, max = 120): string {
   if (oneLine.length <= max) return oneLine;
   return oneLine.slice(0, max - 1) + "…";
 }
+
+/**
+ * Laenge des Laufs aus Leerzeichen und Tabs am Zeilenende. Ersetzt `/[ \t]+$/`.
+ *
+ * Die Regex braucht bei einer langen Kette solcher Zeichen quadratisch Zeit,
+ * weil die Engine jede Startposition durchprobiert, wenn das letzte Zeichen
+ * KEIN Whitespace ist (CodeQL js/polynomial-redos). Gemessen an einer Zeile aus
+ * 50 000 Tabs plus einem `x`: 570 ms gegen 0 ms hier. Diese Fassung liest von
+ * hinten und ist damit linear.
+ *
+ * Bewusst nicht `trimEnd()`: das entfernt auch \r, \n und Unicode-Leerraum und
+ * waere damit nicht dasselbe.
+ */
+export function trailingBlankLength(line: string): number {
+  let i = line.length;
+  while (i > 0) {
+    const code = line.charCodeAt(i - 1);
+    if (code !== 32 && code !== 9) break;
+    i--;
+  }
+  return line.length - i;
+}

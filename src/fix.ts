@@ -15,6 +15,7 @@
  */
 
 import type { ParsedFile } from "./types.js";
+import { trailingBlankLength } from "./locate.js";
 import { parseToolList } from "./spec.js";
 
 /** Marker used for an inserted stub so humans (and tests) can find it. */
@@ -95,7 +96,7 @@ export function fixFile(file: ParsedFile): FixResult {
   let trimmedAny = false;
   for (let i = 0; i < fmLines.length; i++) {
     const line = fmLines[i] ?? "";
-    const trimmed = line.replace(/[ \t]+$/, "");
+    const trimmed = line.slice(0, line.length - trailingBlankLength(line));
     if (trimmed !== line) {
       fmLines[i] = trimmed;
       trimmedAny = true;

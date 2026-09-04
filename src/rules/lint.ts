@@ -11,7 +11,7 @@
 import { basename, dirname } from "node:path";
 import type { Finding, ParsedFile } from "../types.js";
 import { getRule } from "../registry.js";
-import { findKeyLine, makeEvidence } from "../locate.js";
+import { findKeyLine, makeEvidence, trailingBlankLength } from "../locate.js";
 import {
   SKILL_NAME_RE,
   SKILL_NAME_MAX,
@@ -391,7 +391,7 @@ function lintTrailingWhitespace(file: ParsedFile, findings: Finding[]): void {
   const fmStart = file.frontmatter.startLine || 1;
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i] ?? "";
-    if (/[ \t]+$/.test(l) && l.trim().length > 0) {
+    if (trailingBlankLength(l) > 0 && l.trim().length > 0) {
       findings.push(
         finding(
           "skill/trailing-whitespace",

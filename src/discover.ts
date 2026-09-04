@@ -40,9 +40,13 @@ export function isGlob(p: string): boolean {
  * `*` (within a path segment), `?` (single char), and literal text. Forward
  * slashes only (we normalize input to posix).
  */
+/** Siehe die Begruendung am Ende von `globToRegExp`. */
+const MAX_EINZELNE_STERNE = 4;
+
 export function globToRegExp(glob: string): RegExp {
   const g = glob.replace(/\\/g, "/");
   let re = "";
+  let einzelneSterne = 0;
   for (let i = 0; i < g.length; i++) {
     const c = g[i] as string;
     if (c === "*") {
@@ -61,6 +65,7 @@ export function globToRegExp(glob: string): RegExp {
         }
         re += "(?:.*/)?";
       } else {
+        einzelneSterne++;
         re += "[^/]*";
       }
     } else if (c === "?") {
@@ -70,6 +75,24 @@ export function globToRegExp(glob: string): RegExp {
     } else {
       re += c;
     }
+  }
+  // Obergrenze gegen katastrophales Backtracking. Mehrere `[^/]*` im selben
+  // Segment koennen sich beliebig aufteilen; steht davor ein `**` (also
+  // `(?:.*/)?`), waechst die Suche etwa um den Faktor sieben je zusaetzlichem
+  // Stern. Gemessen gegen einen 60-Zeichen-Pfad: 3 Sterne 3 ms, 5 Sterne
+  // 297 ms, 7 Sterne 14 s, 8 Sterne 86 s. Die bestehende Zusammenfassung
+  // aufeinanderfolgender `**` deckt diesen Fall nicht ab, weil die Sterne hier
+  // durch Literale getrennt sind.
+  //
+  // Vier einzelne Sterne sind grosszuegig: `**/*.md` hat einen,
+  // `src/*/test/*.ts` zwei. Wer mehr braucht, hat sich fast immer vertippt und
+  // bekommt lieber sofort eine Meldung als einen Haenger.
+  if (einzelneSterne > MAX_EINZELNE_STERNE) {
+    throw new Error(
+      `Glob-Muster hat ${einzelneSterne} einzelne \`*\`, erlaubt sind ${MAX_EINZELNE_STERNE}: ${glob}\n` +
+        "So viele Platzhalter in einem Muster lassen die Suche entgleisen (katastrophales Backtracking). " +
+        "Meintest du `**` fuer ganze Verzeichnisebenen?",
+    );
   }
   return new RegExp("^" + re + "$");
 }
