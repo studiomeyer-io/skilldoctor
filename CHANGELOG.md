@@ -6,7 +6,35 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Glob patterns are now capped at four single `*`.** A pattern above that is
+  rejected with a message instead of being compiled. This is a behaviour
+  change: `**/*a*a*a*a*a*a*a*a*b` used to be accepted and then took **80
+  seconds** against a 60-character path. Measured, the search grows roughly
+  sevenfold per extra star (3 stars 3 ms, 5 stars 297 ms, 7 stars 14 s, 8 stars
+  86 s), because several `[^/]*` in one segment can split arbitrarily once a
+  `**` precedes them. `**` does not count towards the cap, and every pattern
+  that occurs in practice stays well below it: `**/*.md` has one star,
+  `src/*/test/*.ts` has two.
+
+  The obvious alternative, atomic groups via `(?=(...))\1`, does fix the
+  runtime (0.07 ms) but **changes what `**/*.md` matches**, because that
+  pattern needs the backtracking. Verified against five real paths, and
+  rejected for that reason.
+
 ### Fixed
+
+- **Trailing-whitespace detection no longer degrades on long blank runs.**
+  `/[ \t]+$/` in the linter and in `--fix` is quadratic as soon as the last
+  character is not blank: a line of 50,000 tabs followed by `x` cost 570 ms.
+  Replaced by `trailingBlankLength`, which reads from the end and is linear
+  (0 ms on the same input). Deliberately not `trimEnd()`, which would also
+  strip `\r`, `\n` and Unicode whitespace and therefore is not equivalent.
+
+  All three findings came from the first CodeQL run on this repository
+  (`js/regex-injection`, twice `js/polynomial-redos`). Six regression tests in
+  `test/redos-guards.test.ts`, each verified by mutation.
 
 - **`--fix` no longer rewrites the body's line endings.** When a file had a CRLF
   frontmatter but an LF-only body (or a lone `CR`), the rebuild re-joined the
