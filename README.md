@@ -60,6 +60,8 @@ skilldoctor check <path-or-glob...> [options]
 
 `<path-or-glob>` can be a file, a directory (scanned recursively for `SKILL.md`, `AGENTS.md`, and `agents/*.md`), or a glob like `"**/SKILL.md"`.
 
+A pattern may contain at most four single `*` (`**` does not count). Above that it is rejected with a message rather than compiled: several `[^/]*` in one segment can split arbitrarily, and with a `**` in front the search grows roughly sevenfold per extra star. Every pattern that occurs in practice stays well below the cap.
+
 | Option | Description |
 | --- | --- |
 | `--json <file>` | Write a machine-readable JSON report. |
